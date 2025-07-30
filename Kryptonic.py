@@ -15,8 +15,9 @@ st.set_page_config(
 )
 
 # API Configuration - ADD YOUR GEMINI API KEY HERE
-GEMINI_API_KEY = "AIzaSyB8gVz_X5Uo36pBWaLKZqYjSGD0WMy5pO8"
+GEMINI_API_KEY = "AIzaSyDfpMLC8W9FzVY0ktau9LNHO-Rt02A4cQE"
 COINGECKO_BASE_URL = "https://api.coingecko.com/api/v3"
+
 
 class CryptoChatbot:
     def __init__(self, gemini_api_key):
@@ -30,13 +31,13 @@ class CryptoChatbot:
                 self.model = genai.GenerativeModel('gemini-1.0-pro')
             except:
                 self.model = genai.GenerativeModel('models/gemini-pro')
-       
+
         self.supported_coins = [
             'bitcoin', 'ethereum', 'binancecoin', 'cardano', 'solana',
             'polkadot', 'dogecoin', 'avalanche-2', 'chainlink', 'polygon',
             'ripple', 'litecoin', 'stellar', 'monero', 'tron'
         ]
-       
+
         # Crypto-related keywords for filtering
         self.crypto_keywords = [
             'bitcoin', 'btc', 'ethereum', 'eth', 'cryptocurrency', 'crypto', 'blockchain',
@@ -50,12 +51,12 @@ class CryptoChatbot:
             'usdt', 'usdc', 'busd', 'stable', 'tether', 'binance', 'coinbase',
             'bull market', 'bear market', 'moon', 'lambo', 'diamond hands', 'paper hands'
         ]
-   
+
     def is_crypto_related(self, text):
         """Check if the text is cryptocurrency related"""
         text_lower = text.lower()
         return any(keyword in text_lower for keyword in self.crypto_keywords)
-   
+
     def get_crypto_price(self, coin_id):
         """Get current price and basic info for a cryptocurrency"""
         try:
@@ -73,7 +74,7 @@ class CryptoChatbot:
             return None
         except Exception as e:
             return None
-   
+
     def get_trending_coins(self):
         """Get trending cryptocurrencies"""
         try:
@@ -84,7 +85,7 @@ class CryptoChatbot:
             return None
         except Exception as e:
             return None
-   
+
     def get_market_overview(self):
         """Get top cryptocurrencies by market cap"""
         try:
@@ -102,44 +103,44 @@ class CryptoChatbot:
             return None
         except Exception as e:
             return None
-   
+
     def get_current_market_data(self, num_top_coins=5, num_trending_coins=3):
         """Get current market data to provide context to AI"""
         market_data = self.get_market_overview()
         trending_data = self.get_trending_coins()
-       
+
         context = "Current Crypto Market Data:\n"
-       
+
         if market_data:
             context += f"Top {num_top_coins} Cryptocurrencies by Market Cap:\n"
             for i, coin in enumerate(market_data[:num_top_coins], 1):
                 price = coin['current_price']
                 change = coin['price_change_percentage_24h']
                 context += f"{i}. {coin['name']} ({coin['symbol'].upper()}): ${price:,.2f} ({change:+.2f}%)\n"
-       
+
         if trending_data and 'coins' in trending_data:
             context += f"\nTrending Coins (Top {num_trending_coins}):\n"
             for i, coin in enumerate(trending_data['coins'][:num_trending_coins], 1):
                 context += f"{i}. {coin['item']['name']} ({coin['item']['symbol']})\n"
-       
+
         return context
-   
+
     def ask_ai(self, user_question):
         """Ask Gemini AI about cryptocurrency topics only"""
-       
+
         # First check if the question is crypto-related
         if not self.is_crypto_related(user_question):
             return "🚫 Hey! I'm only here to chat about crypto stuff - Bitcoin, Ethereum, NFTs, all that good stuff. Hit me with a crypto question! 😄"
-       
+
         try:
             # Get current market data for context
             market_context = self.get_current_market_data()
-           
+
             # Create prompt for Gemini
             prompt = f"""You are a professional, teen-friendly cryptocurrency assistant. You're talking to young people (ages 17-30) who want to learn about crypto. Keep the statistics local like for the Caribbean
 
 PERSONALITY:
-- Be friendly, enthusiastic, and relatable
+- Be friendly
 - Use simple, everyday language (no fancy financial jargon)
 - Be like a knowledgeable friend explaining crypto
 - Use emojis but don't overdo it
@@ -158,7 +159,7 @@ RULES:
 
 TONE EXAMPLES:
 - Instead of "utilize" say "use"
-- Instead of "substantial" say "big" or "huge"
+- Instead of "substantial" say "big" or "large"
 - Instead of "fluctuations" say "price changes"
 - Instead of "portfolio diversification" say "spreading your money around"
 
@@ -170,32 +171,34 @@ Your Question: {user_question}
 Give a helpful, friendly and professional response:"""
 
             response = self.model.generate_content(prompt)
-           
+
             return response.text
-           
+
         except Exception as e:
             return f"Oops! Something went wrong on my end 😅 Try asking again in a second: {str(e)}"
-   
+
     def process_query(self, user_input):
         """Process user query and return appropriate response"""
         user_input_lower = user_input.lower()
-       
+
         # Check for specific data requests first
-        if "price" in user_input_lower and any(coin.replace('-', '').replace('2', '') in user_input_lower.replace(' ', '') for coin in self.supported_coins):
+        if "price" in user_input_lower and any(
+                coin.replace('-', '').replace('2', '') in user_input_lower.replace(' ', '') for coin in
+                self.supported_coins):
             for coin in self.supported_coins:
                 if coin.replace('-', '').replace('2', '') in user_input_lower.replace(' ', ''):
                     return self.handle_price_query(coin)
-       
+
         elif "trending" in user_input_lower or "popular" in user_input_lower:
             return self.handle_trending_query()
-       
+
         elif "market" in user_input_lower and ("overview" in user_input_lower or "top" in user_input_lower):
             return self.handle_market_query()
-       
+
         # For all other questions, use AI
         else:
             return self.ask_ai(user_input)
-   
+
     def handle_price_query(self, coin_id):
         """Handle price-related queries"""
         data = self.get_crypto_price(coin_id)
@@ -205,11 +208,11 @@ Give a helpful, friendly and professional response:"""
             change_24h = coin_data.get('usd_24h_change', 0)
             market_cap = coin_data.get('usd_market_cap', 0)
             volume_24h = coin_data.get('usd_24h_vol', 0)
-           
+
             change_emoji = "📈" if change_24h > 0 else "📉"
             change_text = "going up" if change_24h > 0 else "going down"
             change_color = "green" if change_24h > 0 else "red"
-           
+
             response = f"""
 **{coin_id.replace('-', ' ').title()} Right Now** 💰
 
@@ -225,7 +228,7 @@ Remember: Crypto prices change super fast! ⚡
             return response
         else:
             return f"Hmm, couldn't grab the price for {coin_id} right now 🤔 Maybe try again in a bit?"
-   
+
     def handle_trending_query(self):
         """Handle trending coins query"""
         trending_data = self.get_trending_coins()
@@ -239,7 +242,7 @@ Remember: Crypto prices change super fast! ⚡
             return response
         else:
             return "Can't get the trending list right now 😕 Try again in a moment!"
-   
+
     def handle_market_query(self):
         """Handle market overview query"""
         market_data = self.get_market_overview()
@@ -250,11 +253,12 @@ Remember: Crypto prices change super fast! ⚡
             df_display['Price'] = df_display['Price'].apply(lambda x: f"${x:,.2f}")
             df_display['24h Change'] = df_display['24h Change'].apply(lambda x: f"{x:+.2f}%")
             df_display['Market Cap'] = df_display['Market Cap'].apply(lambda x: f"${x:,.0f}")
-           
+
             st.dataframe(df_display, use_container_width=True)
             return "**📊 Top 10 Biggest Cryptos Right Now:**\n\n*These are ranked by how much they're worth in total! 💎*"
         else:
             return "Oops! Can't load the market data right now 📊 Give it another shot!"
+
 
 def main():
     # Load the crypto theme CSS
@@ -262,7 +266,7 @@ def main():
     <style>
     /* Import cyber fonts */
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap');
-   
+
     /* Main app styling */
     .stApp {
         background: linear-gradient(135deg,
@@ -273,7 +277,7 @@ def main():
             #000000 100%);
         color: #00ff88;
     }
-   
+
     /* Header styling */
     .main-header {
         text-align: center;
@@ -290,13 +294,13 @@ def main():
         text-shadow: 0 0 30px rgba(0, 255, 136, 0.5);
         margin-bottom: 1rem;
     }
-   
+
     @keyframes gradientShift {
         0% { background-position: 0% 50%; }
         50% { background-position: 100% 50%; }
         100% { background-position: 0% 50%; }
     }
-   
+
     .sub-header {
         text-align: center;
         color: #888;
@@ -305,7 +309,7 @@ def main():
         margin-bottom: 2rem;
         padding: 0 2rem;
     }
-   
+
     /* Button styling */
     .stButton > button {
         background: linear-gradient(45deg, #00ff88, #00d4ff);
@@ -321,13 +325,13 @@ def main():
         text-transform: uppercase;
         letter-spacing: 1px;
     }
-   
+
     .stButton > button:hover {
         background: linear-gradient(45deg, #ff0080, #00ff88);
         transform: translateY(-2px);
         box-shadow: 0 6px 20px rgba(255, 0, 128, 0.4);
     }
-   
+
     /* Sidebar headers */
     .sidebar-header {
         color: #00ff88;
@@ -338,7 +342,7 @@ def main():
         margin-bottom: 1rem;
         text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
     }
-   
+
     /* Feature list styling */
     .feature-list {
         background: rgba(0, 255, 136, 0.05);
@@ -348,7 +352,7 @@ def main():
         border-radius: 0 8px 8px 0;
         font-family: 'Rajdhani', sans-serif;
     }
-   
+
     /* Status indicators */
     .status-success {
         color: #00ff88;
@@ -359,7 +363,7 @@ def main():
         font-family: 'Rajdhani', sans-serif;
         font-weight: 600;
     }
-   
+
     .status-error {
         color: #ff0080;
         background: rgba(255, 0, 128, 0.1);
@@ -369,18 +373,18 @@ def main():
         font-family: 'Rajdhani', sans-serif;
         font-weight: 600;
     }
-   
+
     /* Glowing effects */
     .glow-text {
         text-shadow: 0 0 10px currentColor;
         animation: pulse 2s infinite;
     }
-   
+
     @keyframes pulse {
         0%, 100% { opacity: 1; }
         50% { opacity: 0.7; }
     }
-   
+
     /* Welcome message styling */
     .welcome-container {
         background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(0, 212, 255, 0.1));
@@ -392,7 +396,7 @@ def main():
         backdrop-filter: blur(10px);
         font-family: 'Rajdhani', sans-serif;
     }
-   
+
     /* Custom Chat Styling */
     .stChatMessage {
         background: transparent !important;
@@ -400,12 +404,12 @@ def main():
         padding: 0 !important;
         margin: 1rem 0 !important;
     }
-   
+
     /* Hide default chat avatars */
     .stChatMessage > div:first-child {
         display: none !important;
     }
-   
+
     /* User Message Styling - Terminal Input Style */
     .user-message {
         background: linear-gradient(90deg, rgba(0, 255, 136, 0.1), rgba(0, 212, 255, 0.05));
@@ -418,7 +422,7 @@ def main():
         box-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
         backdrop-filter: blur(5px);
     }
-   
+
     .user-message::before {
         content: ">";
         position: absolute;
@@ -437,7 +441,7 @@ def main():
         font-size: 12px;
         box-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
     }
-   
+
     .user-message::after {
         content: "";
         position: absolute;
@@ -449,7 +453,7 @@ def main():
         /* Animations always running */
         animation-play-state: running;
     }
-   
+
     /* AI Message Styling - Holographic Panel */
     .ai-message {
         background: linear-gradient(135deg,
@@ -465,7 +469,7 @@ def main():
         box-shadow: 0 8px 32px rgba(0, 212, 255, 0.2);
         overflow: hidden;
     }
-   
+
     .ai-message::before {
         content: "";
         position: absolute;
@@ -481,7 +485,7 @@ def main():
         /* Animations always running */
         animation-play-state: running;
     }
-   
+
     .ai-message::after {
         content: "◇ CRYPTOMIND AI";
         position: absolute;
@@ -496,7 +500,7 @@ def main():
         font-family: 'Orbitron', monospace;
         letter-spacing: 1px;
     }
-   
+
     /* Data stream effect for AI messages - conditional animation */
     .ai-message .data-stream {
         position: absolute;
@@ -510,7 +514,7 @@ def main():
         /* Animations always running */
         animation-play-state: running;
     }
-   
+
     .ai-message .data-stream::before {
         content: "";
         position: absolute;
@@ -524,7 +528,7 @@ def main():
         /* Animations always running */
         animation-play-state: running;
     }
-   
+
     .ai-message .data-stream::after {
         content: "";
         position: absolute;
@@ -538,18 +542,18 @@ def main():
         /* Animations always running */
         animation-play-state: running;
     }
-   
+
     /* Animations */
     @keyframes borderGlow {
         0%, 100% { background-position: 0% 50%; }
         50% { background-position: 100% 50%; }
     }
-   
+
     @keyframes dataPulse {
         0%, 100% { opacity: 1; transform: scale(1); }
         50% { opacity: 0.3; transform: scale(0.8); }
     }
-   
+
     /* Terminal cursor effect for user input */
     .user-message .terminal-cursor {
         display: inline-block;
@@ -560,17 +564,17 @@ def main():
         /* Animations always running */
         animation-play-state: running;
     }
-   
+
     @keyframes cursorBlink {
         0%, 50% { opacity: 1; }
         51%, 100% { opacity: 0; }
     }
-   
+
     /* Glitch effect for user messages on hover */
     .user-message:hover {
         animation: glitchEffect 0.3s ease-in-out;
     }
-   
+
     @keyframes glitchEffect {
         0% { transform: translateX(0); }
         20% { transform: translateX(-2px); }
@@ -579,22 +583,22 @@ def main():
         80% { transform: translateX(1px); }
         100% { transform: translateX(0); }
     }
-   
+
     /* Hologram effect for AI messages */
     .ai-message:hover {
         transform: translateY(-2px);
         box-shadow: 0 12px 40px rgba(0, 212, 255, 0.3);
         transition: all 0.3s ease;
     }
-   
+
     </style>
     """, unsafe_allow_html=True)
-   
+
     # Custom header with crypto styling (toggle removed)
     col1, col2, col3 = st.columns([1, 2, 1])
-   
+
     # Removed the st.toggle code from here
-           
+
     with col2:
         st.markdown("""
         <div class="main-header">
@@ -605,10 +609,10 @@ def main():
             <span style="color: #00ff88;">🔮 Smart AI • Live Prices • Easy Explanations 🔮</span>
         </div>
         """, unsafe_allow_html=True)
-   
+
     # --- JAVASCRIPT TO CONTROL ANIMATION PLAY STATE ---
     # Removed all JavaScript related to animation control via toggle
-   
+
     # Check if API key is configured
     if GEMINI_API_KEY == "YOUR_GEMINI_API_KEY_HERE":
         st.markdown("""
@@ -617,7 +621,7 @@ def main():
         Need your Google AI key to get this working
         </div>
         """, unsafe_allow_html=True)
-       
+
         st.markdown("""
         <div class="feature-list">
         <strong>🔑 Quick Setup:</strong><br>
@@ -629,11 +633,11 @@ def main():
         </div>
         """, unsafe_allow_html=True)
         return
-   
+
     # Sidebar with quick actions
     with st.sidebar:
         st.markdown('<div class="sidebar-header">⚡ QUICK STUFF ⚡</div>', unsafe_allow_html=True)
-       
+
         # Initialize chatbot
         if 'chatbot' not in st.session_state:
             try:
@@ -657,12 +661,12 @@ def main():
                 </div>
                 """, unsafe_allow_html=True)
                 return
-       
+
         st.markdown("---")
-       
+
         # Quick action buttons with crypto styling
         col1, col2 = st.columns(2)
-       
+
         with col1:
             if st.button("🔥 TRENDING"):
                 response = st.session_state.chatbot.handle_trending_query()
@@ -670,14 +674,14 @@ def main():
                     st.session_state.messages = []
                 st.session_state.messages.append({"role": "assistant", "content": response})
                 st.rerun()
-           
+
             if st.button("💰 BTC PRICE"):
                 response = st.session_state.chatbot.handle_price_query("bitcoin")
                 if 'messages' not in st.session_state:
                     st.session_state.messages = []
                 st.session_state.messages.append({"role": "assistant", "content": response})
                 st.rerun()
-       
+
         with col2:
             if st.button("📊 TOP COINS"):
                 response = st.session_state.chatbot.handle_market_query()
@@ -685,35 +689,35 @@ def main():
                     st.session_state.messages = []
                 st.session_state.messages.append({"role": "assistant", "content": response})
                 st.rerun()
-           
+
             if st.button("🔄 CLEAR CHAT"):
                 st.session_state.messages = []
                 st.rerun()
-       
+
         st.markdown("---")
-       
+
         # Features section with crypto styling
         st.markdown("""
         <div class="feature-list">
         <div class="sidebar-header">🛡️ WHAT I CAN DO</div>
-       
+
         <strong>🤖 Smart Crypto Help</strong><br>
         • Explain crypto in simple terms<br>
         • Help you understand the market<br>
         • Answer all your crypto questions<br><br>
-       
+
         <strong>⚡ Live Data</strong><br>
         • Real-time prices<br>
         • What's trending now<br>
         • Market overviews<br><br>
-       
+
         <strong>🔒 Safe Space</strong><br>
         • Only talk about crypto<br>
         • No weird stuff<br>
         • Always honest about risks<br>
         </div>
         """, unsafe_allow_html=True)
-   
+
     # Initialize chatbot
     if 'chatbot' not in st.session_state:
         try:
@@ -730,11 +734,11 @@ def main():
             </div>
             """, unsafe_allow_html=True)
             return
-   
+
     # Initialize chat history without the welcome message
     if "messages" not in st.session_state:
         st.session_state.messages = []
-   
+
     # Display chat messages with custom styling
     for message in st.session_state.messages:
         if message["role"] == "user":
@@ -753,21 +757,22 @@ def main():
                 {message["content"]}
             </div>
             """, unsafe_allow_html=True)
-   
+
     # Chat input with enhanced styling
     if prompt := st.chat_input("🤑Ask me anything about crypto..."):
         # Add user message to chat history
         st.session_state.messages.append({"role": "user", "content": prompt})
-       
+
         # Generate and display assistant response
         with st.spinner("🧠 Thinking about your question..."):
             response = st.session_state.chatbot.process_query(prompt)
-           
+
             # Add assistant response to chat history
             st.session_state.messages.append({"role": "assistant", "content": response})
-       
+
         # Rerun to show new messages with custom styling
         st.rerun()
+
 
 if __name__ == "__main__":
     main()
