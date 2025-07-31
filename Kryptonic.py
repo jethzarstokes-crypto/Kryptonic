@@ -700,4 +700,16 @@ def main():
     # Initialize session state
     if 'dark_mode' not in st.session_state:
         st.session_state.dark_mode = True
-    if 'animations_enabled' not in st.session_state
+    if 'animations_enabled' not in st.session_state:
+        st.session_state.animations_enabled = True
+    if 'page' not in st.session_state:
+        st.session_state.page = "welcome"
+    
+    # Route to appropriate page
+    if st.session_state.page == "welcome":
+        welcome_page()
+    elif st.session_state.page == "chat":
+        chat_page()
+
+if __name__ == "__main__":
+    main()
